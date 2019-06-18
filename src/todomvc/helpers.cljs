@@ -20,7 +20,7 @@
     :active (not completed)
     true))
 
-;; will look like {id {:id _ :title _ :completed _ }}
+;; will look like {id {:title _ :completed _ }}
 
 (def todos-empty (sorted-map))
 
@@ -31,16 +31,15 @@
   (let [todos-all (todos-all todos)]
     (filter #(not (:completed %)) todos-all)))
 
-(defn todos-completed [todos]
-  (let [todos-all (todos-all todos)]
-    (filter :completed todos-all)))
+(defn todos-completed-ids [todos]
+  (map first (filter (comp :completed second) todos)))
 
 (defn todos-any? [todos]
   (pos? (count (todos-all todos))))
 
 (defn todos-any-completed? [todos]
-  (pos? (count (todos-completed todos))))
+  (pos? (count (todos-completed-ids todos))))
 
 (defn todos-all-completed? [todos]
   (= (count (todos-all todos))
-     (count (todos-completed todos))))
+     (count (todos-completed-ids todos))))

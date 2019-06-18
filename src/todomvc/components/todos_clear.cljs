@@ -16,7 +16,6 @@
   (fn [msg]
     (cond
       (= ::click msg)
-      ;; TODO: drop need for having :id in todo.
-      (if-let [to-delete (not-empty (map :id (helpers/todos-completed todos)))]
+      (if-let [to-delete (not-empty (helpers/todos-completed-ids todos))]
         (reacl/return :app-state (apply dissoc todos to-delete))
         (reacl/return)))))

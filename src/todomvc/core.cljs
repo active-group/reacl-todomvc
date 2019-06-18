@@ -42,7 +42,7 @@
       (let [id (keyword (str "id" (:counter state)))
             tr (helpers/trim-title (:editing lstate))]
         (reacl/return :app-state (-> state
-                                     (update :todos assoc id {:id id :title tr :completed false})
+                                     (update :todos assoc id {:title tr :completed false})
                                      (update :counter inc))
                       :local-state (assoc lstate :editing "")))
       )))
