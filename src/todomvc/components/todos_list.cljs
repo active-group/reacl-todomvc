@@ -3,16 +3,17 @@
             [reacl2.dom :as dom]
             [todomvc.components.todo-item :as todo-item]))
 
-(reacl/defclass t this todos [display-type]
+(defrecord Update [todo id])
+
+(reacl/defclass t this [todos display-type update-action delete-action]
   render
   (dom/ul {:class "todo-list"}
           (for [[id todo] todos]
-            (-> (todo-item/t (reacl/bind this id) display-type [::delete id])
-                (reacl/keyed id)
-                (reacl/handle-actions this))))
+            (-> (todo-item/t (reacl/reactive todo (reacl/reaction this ->Update id))
+                             display-type (delete-action id))
+                (reacl/keyed id))))
 
   handle-message
   (fn [msg]
-    (cond
-      (= (first msg) ::delete)
-      (reacl/return :app-state (dissoc todos (second msg))))))
+    (condp instance? msg
+      Update (reacl/return :action (update-action (:id msg) (:todo msg))))))

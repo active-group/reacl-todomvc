@@ -14,42 +14,75 @@
             [todomvc.components.todos-filters :as todos-filters]
             [todomvc.components.todos-clear :as todos-clear]))
 
+(defrecord Add [text])
+(defrecord Update [id todo])
+(defrecord Delete [id])
+(defrecord ToggleAll [value])
+(defrecord ClearCompleted [])
+
 (reacl/defclass todo-app this state [display-type]
-  local-state
-  [lstate {:editing ""}]
-  
   render
   (let [todos (:todos state)]
-    (dom/div (dom/section {:class "todoapp"}
-                          (dom/header {:class "header"}
-                                      (title/t)
-                                      (-> (todo-input/t (reacl/bind-locally this :editing) ::add-todo)
-                                          (reacl/handle-actions this)))
-                          (dom/div {:style {:display (helpers/display-elem (helpers/todos-any? todos))}}
-                                   (dom/section {:class "main"}
-                                                (todos-toggle/t (reacl/bind this :todos))
-                                                (todos-list/t (reacl/bind this :todos) display-type))
-                                   (dom/footer {:class "footer"}
-                                               (todos-count/t todos)
-                                               (todos-filters/t display-type)
-                                               (todos-clear/t (reacl/bind this :todos)))))
-             (footer/t)))
+    (-> (dom/div (dom/section {:class "todoapp"}
+                              (dom/header {:class "header"}
+                                          (title/t)
+                                          (todo-input/t ->Add))
+                              (dom/div {:style {:display (helpers/display-elem (helpers/todos-any? todos))}}
+                                       (dom/section {:class "main"}
+                                                    (todos-toggle/t todos ->ToggleAll)
+                                                    (todos-list/t todos display-type ->Update ->Delete))
+                                       (dom/footer {:class "footer"}
+                                                   (todos-count/t todos)
+                                                   (todos-filters/t display-type)
+                                                   (todos-clear/t todos (->ClearCompleted)))))
+                 (footer/t))
+        (reacl/handle-actions this)))
 
   handle-message
   (fn [msg]
-    (cond
-      (= msg ::add-todo)
+    (condp instance? msg
+      Add
       (let [id (keyword (str "id" (:counter state)))
-            tr (helpers/trim-title (:editing lstate))]
-        (reacl/return :app-state (-> state
-                                     (update :todos assoc id {:title tr :completed false})
-                                     (update :counter inc))
-                      :local-state (assoc lstate :editing "")))
+            tr (helpers/trim-title (:text msg))]
+        (reacl/return :app-state
+                      (-> state
+                          (update :todos assoc id {:title tr :completed false})
+                          (update :counter inc))))
+
+      Update
+      (let [id (:id msg)
+            todo (:todo msg)]
+        (reacl/return :app-state
+                      (-> state
+                          (assoc-in [:todos id] todo))))
+
+      Delete
+      (let [id (:id msg)]
+        (reacl/return :app-state
+                      (-> state
+                          (update :todos dissoc id))))
+      
+      ClearCompleted
+      (reacl/return :app-state
+                    (-> state
+                        (assoc :todos (reduce dissoc
+                                              (:todos state)
+                                              (helpers/todos-completed-ids (:todos state))))))
+
+      ToggleAll
+      (let [toggle (:value msg)]
+        (reacl/return :app-state
+                      (-> state
+                          (assoc :todos (reduce (fn [todos id]
+                                                  (assoc-in todos [id :completed] toggle))
+                                                (:todos state)
+                                                (keys (:todos state)))))))
+      
       )))
 
 (reacl/defclass todo-app-controller this state [todos-changed-action counter-changed-action]
   local-state
-  [lstate {:display-type :all}] ;; TODO: init this from the location?
+  [lstate {:display-type :all}]
   
   render
   (todo-app (reacl/reactive state (reacl/pass-through-reaction this))

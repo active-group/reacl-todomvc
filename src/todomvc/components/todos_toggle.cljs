@@ -4,7 +4,7 @@
             [todomvc.components.utils :as u]
             [todomvc.helpers :as helpers]))
 
-(reacl/defclass t this todos []
+(reacl/defclass t this [todos toggle-action]
   render
   (dom/span {:class "toggle"}
             (u/checkbox (reacl/reactive (helpers/todos-all-completed? todos)
@@ -15,7 +15,4 @@
 
   handle-message
   (fn [toggle]
-    (reacl/return :app-state
-                  (into {} (map (fn [[id todo]]
-                                  [id (assoc todo :completed (not toggle))])
-                                todos)))))
+    (reacl/return :action (toggle-action toggle))))

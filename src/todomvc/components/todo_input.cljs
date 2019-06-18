@@ -4,8 +4,10 @@
             [todomvc.components.todo-edit :as todo-edit]
             [todomvc.helpers :as helpers]))
 
-(reacl/defclass t this editing [commit-action]
+(reacl/defclass t this [add-action]
   refs [input]
+
+  local-state [editing ""]
 
   validate (assert (string? editing))
 
@@ -29,10 +31,11 @@
   (fn [msg]
     (cond
       (= (first msg) ::change)
-      (reacl/return :app-state (second msg))
+      (reacl/return :local-state (second msg))
       
       (= (first msg) ::key)
       (let [key-pressed (second msg)]
         (condp = key-pressed
-          helpers/enter-key (reacl/return :action commit-action)
+          helpers/enter-key (reacl/return :action (add-action editing)
+                                          :local-state "")
           (reacl/return))))))
