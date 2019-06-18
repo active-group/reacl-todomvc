@@ -34,8 +34,10 @@
       (reacl/return :local-state (second msg))
       
       (= (first msg) ::key)
-      (let [key-pressed (second msg)]
-        (condp = key-pressed
-          helpers/enter-key (reacl/return :action (add-action editing)
-                                          :local-state "")
+      (let [key-pressed (second msg)
+            title (helpers/trim-title editing)]
+        (if (and (= key-pressed helpers/enter-key)
+                 (not-empty title))
+          (reacl/return :action (add-action title)
+                        :local-state "")
           (reacl/return))))))
