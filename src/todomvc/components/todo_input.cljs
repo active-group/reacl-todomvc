@@ -9,8 +9,6 @@
 
   local-state [editing ""]
 
-  validate (assert (string? editing))
-
   render
   (dom/input {:type "text"
               :class "new-todo"
