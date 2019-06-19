@@ -9,6 +9,10 @@
   (str (when completed "completed ")
        (when editing "editing")))
 
+(defrecord Edit [])
+(defrecord Commit [])
+(defrecord Reset [])
+
 (reacl/defclass t this todo [display-type delete-action]
   local-state [editing nil] ;; nil or text while editing
   
@@ -20,25 +24,24 @@
             (dom/div {:class "view"}
                      (u/checkbox (reacl/bind this :completed)
                                  {:class "toggle"})
-                     (dom/label {:ondoubleclick (fn [_] (reacl/send-message! this ::edit))}
+                     (dom/label {:ondoubleclick (fn [_] (reacl/send-message! this (->Edit)))}
                                 title)
                      (u/button {:class "destroy"
                                 :onclick delete-action}))
-            (-> (todo-edit/t (reacl/bind-locally this) ::commit ::reset)
+            (-> (todo-edit/t (reacl/bind-locally this) (->Commit) (->Reset))
                 (reacl/handle-actions this))))
 
   handle-message
   (fn [msg]
-    (cond
-      (= msg ::commit)
-      (let [tr (helpers/trim-title editing)]
-        (if-not (empty? tr)
-          (reacl/return :app-state (assoc todo :title tr)
-                        :local-state nil)
-          (reacl/return :action delete-action)))
+    (condp instance? msg
+      Commit
+      (if-let [tr (not-empty (helpers/trim-title editing))]
+        (reacl/return :app-state (assoc todo :title tr)
+                      :local-state nil)
+        (reacl/return :action delete-action))
 
-      (= msg ::reset)
+      Reset
       (reacl/return :local-state nil)
       
-      (= msg ::edit)
+      Edit
       (reacl/return :local-state (:title todo)))))

@@ -43,10 +43,10 @@
     (condp instance? msg
       Add
       (let [id (keyword (str "id" (:counter state)))
-            tr (helpers/trim-title (:text msg))]
+            title (:text msg)]
         (reacl/return :app-state
                       (-> state
-                          (update :todos assoc id {:title tr :completed false})
+                          (update :todos assoc id {:title title :completed false})
                           (update :counter inc))))
 
       Update
