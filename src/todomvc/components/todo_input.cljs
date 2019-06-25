@@ -4,6 +4,11 @@
             [todomvc.components.todo-edit :as todo-edit]
             [todomvc.helpers :as helpers]))
 
+(defrecord Change [text])
+(defrecord KeyDown [which])
+
+;; TODO: we have almost the same input in todo_edit.
+
 (reacl/defclass t this [add-action]
   refs [input]
 
@@ -16,9 +21,9 @@
               :value editing
               :placeholder "What needs to be done?"
               :onchange (fn [e]
-                          (reacl/send-message! this [::change (.. e -target -value)]))
+                          (reacl/send-message! this (->Change (.. e -target -value))))
               :onkeydown (fn [e]
-                           (reacl/send-message! this [::key (.-which e)]))})
+                           (reacl/send-message! this (->KeyDown (.-which e))))})
 
   component-did-mount
   (fn []
@@ -27,12 +32,12 @@
 
   handle-message
   (fn [msg]
-    (cond
-      (= (first msg) ::change)
-      (reacl/return :local-state (second msg))
+    (condp instance? msg
+      Change
+      (reacl/return :local-state (:text msg))
       
-      (= (first msg) ::key)
-      (let [key-pressed (second msg)
+      KeyDown
+      (let [key-pressed (:which msg)
             title (helpers/trim-title editing)]
         (if (and (= key-pressed helpers/enter-key)
                  (not-empty title))

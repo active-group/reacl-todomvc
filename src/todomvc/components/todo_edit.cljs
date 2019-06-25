@@ -4,7 +4,7 @@
             [todomvc.helpers :as helpers]))
 
 (defrecord Blur [])
-(defrecord Key [which])
+(defrecord KeyDown [which])
 (defrecord Change [text])
 
 (reacl/defclass t this editing [commit-action reset-action]
@@ -25,7 +25,7 @@
                         (reacl/send-message! this (->Blur)))
               :onkeydown (fn [e]
                            (let [key-pressed (.-which e)]
-                             (reacl/send-message! this (->Key key-pressed))))
+                             (reacl/send-message! this (->KeyDown key-pressed))))
               :onchange (fn [e]
                           (let [text (.. e -target -value)]
                             (reacl/send-message! this (->Change text))))})
@@ -42,7 +42,7 @@
       Change
       (reacl/return :app-state (:text msg))
 
-      Key
+      KeyDown
       (let [key-pressed (:which msg)]
         (condp = key-pressed
           helpers/enter-key (reacl/return :action commit-action)
