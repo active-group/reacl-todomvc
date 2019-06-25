@@ -1,6 +1,7 @@
 (ns todomvc.components.todo-edit
   (:require [reacl2.core :as reacl :include-macros true]
             [reacl2.dom :as dom]
+            [todomvc.global :as global]
             [todomvc.components.utils :as u]
             [todomvc.helpers :as helpers]))
 
@@ -16,8 +17,8 @@
 
   component-did-update
   (fn []
-    (.focus (reacl/get-dom input))
-    (reacl/return))
+    (let [elem (reacl/get-dom input)]
+      (reacl/return :action (global/focus-action elem))))
 
   render
   (-> (u/text-input (reacl/bind this editing-text-lens)

@@ -30,7 +30,8 @@
                      (u/button {:class "destroy"
                                 :onclick delete-action}))
             (-> (todo-edit/t (reacl/bind-locally this) (->Commit) (->Reset))
-                (reacl/handle-actions this))))
+                (reacl/handle-actions this #(or (instance? Commit %)
+                                                (instance? Reset %))))))
 
   handle-message
   (fn [msg]

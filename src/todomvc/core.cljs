@@ -1,7 +1,7 @@
 (ns todomvc.core
   (:require [reacl2.core :as reacl :include-macros true]
             [reacl2.dom :as dom :include-macros true]
-            [todomvc.session :as session]
+            [todomvc.global :as global]
             [todomvc.helpers :as helpers]
             [todomvc.routes :as routes]
             
@@ -20,6 +20,10 @@
 (defrecord ToggleAll [value])
 (defrecord ClearCompleted [])
 
+(defn- any-instance? [v & types]
+  (some #(and (instance? % v) true)
+        types))
+
 (reacl/defclass todo-app this state [display-type]
   render
   (let [todos (:todos state)]
@@ -36,7 +40,7 @@
                                                    (todos-filters/t display-type)
                                                    (todos-clear/t todos (->ClearCompleted)))))
                  (footer/t))
-        (reacl/handle-actions this)))
+        (reacl/handle-actions this #(any-instance? % Add Update Delete ToggleAll ClearCompleted))))
 
   handle-message
   (fn [msg]
@@ -80,48 +84,43 @@
       
       )))
 
+(defrecord ChangeDisplay [type])
+(defrecord ChangeState [state])
+
 (reacl/defclass todo-app-controller this state [todos-changed-action counter-changed-action]
   local-state
   [lstate {:display-type :all}]
   
   render
-  (todo-app (reacl/reactive state (reacl/pass-through-reaction this))
+  (todo-app (reacl/reactive state (reacl/reaction this ->ChangeState))
             (:display-type lstate))
 
   handle-message
   (fn [msg]
-    (cond
-      (= (first msg) ::goto)
-      (let [display-type (second msg)]
+    (condp instance? msg
+      ChangeDisplay
+      (let [display-type (:type msg)]
         (reacl/return :local-state (assoc lstate :display-type display-type)))
-      :else
-      (let [new-state msg]
+
+      ChangeState
+      (let [new-state (:state msg)]
         (cond-> (reacl/return :app-state new-state)
           (not= (:todos new-state)
                 (:todos state))
-          (reacl/merge-returned (reacl/return :action todos-changed-action))
+          (reacl/merge-returned (reacl/return :action (todos-changed-action (:todos new-state))))
 
           (not= (:counter new-state)
                 (:counter state))
-          (reacl/merge-returned (reacl/return :action counter-changed-action)))))))
+          (reacl/merge-returned (reacl/return :action (counter-changed-action (:counter new-state)))))))))
 
 (defn ^:export run []
   (let [app (reacl/render-component (js/document.getElementById "app")
                                     todo-app-controller
-                                    (reacl/handle-toplevel-actions
-                                     (fn [state act]
-                                       (cond
-                                         (= act ::todos-changed)
-                                         (do (reset! todomvc.session/todos (:todos state))
-                                             (reacl/return))
-
-                                         (= act ::counter-changed)
-                                         (do (reset! todomvc.session/todos-counter (:counter state))
-                                             (reacl/return)))))
-                                    {:todos @todomvc.session/todos
-                                     :counter @todomvc.session/todos-counter}
-                                    ::todos-changed
-                                    ::counter-changed)]
+                                    (reacl/handle-toplevel-actions global/handle-global-action!)
+                                    {:todos @todomvc.global/todos
+                                     :counter @todomvc.global/todos-counter}
+                                    (global/reset-action todomvc.global/todos)
+                                    (global/reset-action todomvc.global/todos-counter))]
     (routes/setup! (fn [page]
-                     (reacl/send-message! app [::goto page])))
+                     (reacl/send-message! app (->ChangeDisplay page))))
     app))
