@@ -7,8 +7,17 @@
 
   :plugins [[lein-cljsbuild "1.1.7"]]
 
+  :aliases {"fig" ["trampoline" "with-profile" "+dev,+test" "run" "-m" "figwheel.main" "-b" "dev" "-r"]}
+
+  :clean-targets ^{:protect false} ["target" "js"]
+
   :profiles {:dev {:cljsbuild {:builds [{:source-paths ["src"]
-                                         :compiler {:output-to "js/app.js"}}]}}
+                                         :compiler {:output-to "js/app.js"}}]}
+                   :dependencies [[com.bhauman/figwheel-main "0.2.0"]
+                                  [com.bhauman/rebel-readline-cljs "0.1.4"]]
+                   :resource-paths ["target"]}
+
+             :test {:source-paths ["src" "test"]}
 
              :prod {:cljsbuild {:builds [{:source-paths ["src"]
                                           :compiler {:output-to "js/app.js"
