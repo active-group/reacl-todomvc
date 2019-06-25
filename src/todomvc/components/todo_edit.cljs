@@ -1,11 +1,15 @@
 (ns todomvc.components.todo-edit
   (:require [reacl2.core :as reacl :include-macros true]
             [reacl2.dom :as dom]
+            [todomvc.components.utils :as u]
             [todomvc.helpers :as helpers]))
 
 (defrecord Blur [])
 (defrecord KeyDown [which])
-(defrecord Change [text])
+
+(defn editing-text-lens
+  ([v] (or v ""))
+  ([o v] v))
 
 (reacl/defclass t this editing [commit-action reset-action]
   refs [input]
@@ -16,19 +20,13 @@
     (reacl/return))
 
   render
-  (dom/input {:type "text"
-              :class "edit"
-              :ref input
-              :style {:display (helpers/display-elem editing)}
-              :value (or editing "")
-              :onblur (fn [e]
-                        (reacl/send-message! this (->Blur)))
-              :onkeydown (fn [e]
-                           (let [key-pressed (.-which e)]
-                             (reacl/send-message! this (->KeyDown key-pressed))))
-              :onchange (fn [e]
-                          (let [text (.. e -target -value)]
-                            (reacl/send-message! this (->Change text))))})
+  (-> (u/text-input (reacl/bind this editing-text-lens)
+                    {:class "edit"
+                     :ref input
+                     :style {:display (helpers/display-elem editing)}
+                     :onblur (->Blur)
+                     :onkeydown ->KeyDown})
+      (reacl/handle-actions this))
 
   handle-message
   (fn [msg]
@@ -39,9 +37,6 @@
         (reacl/return :action commit-action)
         (reacl/return))
       
-      Change
-      (reacl/return :app-state (:text msg))
-
       KeyDown
       (let [key-pressed (:which msg)]
         (condp = key-pressed

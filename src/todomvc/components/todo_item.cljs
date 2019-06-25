@@ -24,8 +24,9 @@
             (dom/div {:class "view"}
                      (u/checkbox (reacl/bind this :completed)
                                  {:class "toggle"})
-                     (dom/label {:ondoubleclick (fn [_] (reacl/send-message! this (->Edit)))}
-                                title)
+                     (-> (u/label {:ondoubleclick (->Edit)}
+                                  title)
+                         (reacl/handle-actions this))
                      (u/button {:class "destroy"
                                 :onclick delete-action}))
             (-> (todo-edit/t (reacl/bind-locally this) (->Commit) (->Reset))
