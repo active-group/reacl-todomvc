@@ -116,7 +116,7 @@
 (defn ^:export run []
   (let [app (reacl/render-component (js/document.getElementById "app")
                                     todo-app-controller
-                                    (reacl/handle-toplevel-actions global/handle-global-action!)
+                                    (reacl/handle-toplevel-action global/handle-global-action!)
                                     {:todos @todomvc.global/todos
                                      :counter @todomvc.global/todos-counter}
                                     (global/reset-action todomvc.global/todos)
