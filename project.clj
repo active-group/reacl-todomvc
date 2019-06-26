@@ -12,7 +12,10 @@
   :clean-targets ^{:protect false} ["target" "js"]
 
   :profiles {:dev {:cljsbuild {:builds [{:source-paths ["src"]
-                                         :compiler {:output-to "js/app.js"}}]}
+                                         :compiler {:output-to "js/app.js"
+                                                    :output-dir "js/"
+                                                    :main todomvc.core
+                                                    :optimizations :none}}]}
                    :dependencies [[com.bhauman/figwheel-main "0.2.0"]
                                   [com.bhauman/rebel-readline-cljs "0.1.4"]]
                    :resource-paths ["target"]}
