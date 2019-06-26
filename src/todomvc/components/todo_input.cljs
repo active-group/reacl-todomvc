@@ -13,12 +13,11 @@
   local-state [editing ""]
 
   render
-  (-> (u/text-input (reacl/bind-locally this)
-                    {:class "new-todo"
-                     :ref input
-                     :placeholder "What needs to be done?"
-                     :onkeydown ->KeyDown})
-      (reacl/handle-actions this))
+  (u/text-input (reacl/bind-locally this)
+                {:class "new-todo"
+                 :ref input
+                 :placeholder "What needs to be done?"
+                 :onkeydown (u/event-message this ->KeyDown)})
 
   component-did-mount
   (fn []
@@ -33,6 +32,6 @@
             title (helpers/trim-title editing)]
         (if (and (= key-pressed helpers/enter-key)
                  (not-empty title))
-          (reacl/return :action (add-action title)
-                        :local-state "")
+          (-> (add-action title)
+              (reacl/merge-returned (reacl/return :local-state "")))
           (reacl/return))))))

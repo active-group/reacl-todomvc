@@ -24,14 +24,13 @@
             (dom/div {:class "view"}
                      (u/checkbox (reacl/bind this :completed)
                                  {:class "toggle"})
-                     (-> (u/label {:ondoubleclick (->Edit)}
-                                  title)
-                         (reacl/handle-actions this))
+                     (u/label {:ondoubleclick (reacl/return :message [this (->Edit)])}
+                              title)
                      (u/button {:class "destroy"
                                 :onclick delete-action}))
-            (-> (todo-edit/t (reacl/bind-locally this) (->Commit) (->Reset))
-                (reacl/handle-actions this #(or (instance? Commit %)
-                                                (instance? Reset %))))))
+            (todo-edit/t (reacl/bind-locally this)
+                         (reacl/return :message [this (->Commit)])
+                         (reacl/return :message [this (->Reset)]))))
 
   handle-message
   (fn [msg]
@@ -40,7 +39,7 @@
       (if-let [tr (not-empty (helpers/trim-title editing))]
         (reacl/return :app-state (assoc todo :title tr)
                       :local-state nil)
-        (reacl/return :action delete-action))
+        delete-action)
 
       Reset
       (reacl/return :local-state nil)

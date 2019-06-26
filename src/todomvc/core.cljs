@@ -5,6 +5,7 @@
             [todomvc.helpers :as helpers]
             [todomvc.routes :as routes]
             
+            [todomvc.components.utils :as u]
             [todomvc.components.title :as title]
             [todomvc.components.todo-input :as todo-input]
             [todomvc.components.footer :as footer]
@@ -20,27 +21,24 @@
 (defrecord ToggleAll [value])
 (defrecord ClearCompleted [])
 
-(defn- any-instance? [v & types]
-  (some #(and (instance? % v) true)
-        types))
-
 (reacl/defclass todo-app this state [display-type]
   render
   (let [todos (:todos state)]
-    (-> (dom/div (dom/section {:class "todoapp"}
-                              (dom/header {:class "header"}
-                                          (title/t)
-                                          (todo-input/t ->Add))
-                              (dom/div {:style {:display (helpers/display-elem (helpers/todos-any? todos))}}
-                                       (dom/section {:class "main"}
-                                                    (todos-toggle/t todos ->ToggleAll)
-                                                    (todos-list/t todos display-type ->Update ->Delete))
-                                       (dom/footer {:class "footer"}
-                                                   (todos-count/t todos)
-                                                   (todos-filters/t display-type)
-                                                   (todos-clear/t todos (->ClearCompleted)))))
-                 (footer/t))
-        (reacl/handle-actions this #(any-instance? % Add Update Delete ToggleAll ClearCompleted))))
+    (dom/div (dom/section {:class "todoapp"}
+                          (dom/header {:class "header"}
+                                      (title/t)
+                                      (todo-input/t (u/event-message this ->Add)))
+                          (dom/div {:style {:display (helpers/display-elem (helpers/todos-any? todos))}}
+                                   (dom/section {:class "main"}
+                                                (todos-toggle/t todos (u/event-message this ->ToggleAll))
+                                                (todos-list/t todos display-type
+                                                              (u/event-message this ->Update)
+                                                              (u/event-message this ->Delete)))
+                                   (dom/footer {:class "footer"}
+                                               (todos-count/t todos)
+                                               (todos-filters/t display-type)
+                                               (todos-clear/t todos (reacl/return :message [this (->ClearCompleted)])))))
+             (footer/t)))
 
   handle-message
   (fn [msg]
@@ -107,11 +105,11 @@
         (cond-> (reacl/return :app-state new-state)
           (not= (:todos new-state)
                 (:todos state))
-          (reacl/merge-returned (reacl/return :action (todos-changed-action (:todos new-state))))
+          (reacl/merge-returned (todos-changed-action (:todos new-state)))
 
           (not= (:counter new-state)
                 (:counter state))
-          (reacl/merge-returned (reacl/return :action (counter-changed-action (:counter new-state)))))))))
+          (reacl/merge-returned (counter-changed-action (:counter new-state))))))))
 
 (defn ^:export run []
   (let [app (reacl/render-component (js/document.getElementById "app")
@@ -119,8 +117,8 @@
                                     (reacl/handle-toplevel-action global/handle-global-action!)
                                     {:todos @todomvc.global/todos
                                      :counter @todomvc.global/todos-counter}
-                                    (global/reset-action todomvc.global/todos)
-                                    (global/reset-action todomvc.global/todos-counter))]
+                                    (comp (partial reacl/return :action) (global/reset-action todomvc.global/todos))
+                                    (comp (partial reacl/return :action) (global/reset-action todomvc.global/todos-counter)))]
     (routes/setup! (fn [page]
                      (reacl/send-message! app (->ChangeDisplay page))))
     app))

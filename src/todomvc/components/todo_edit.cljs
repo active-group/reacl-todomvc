@@ -21,13 +21,12 @@
       (reacl/return :action (global/focus-action elem))))
 
   render
-  (-> (u/text-input (reacl/bind this editing-text-lens)
-                    {:class "edit"
-                     :ref input
-                     :style {:display (helpers/display-elem editing)}
-                     :onblur (->Blur)
-                     :onkeydown ->KeyDown})
-      (reacl/handle-actions this))
+  (u/text-input (reacl/bind this editing-text-lens)
+                {:class "edit"
+                 :ref input
+                 :style {:display (helpers/display-elem editing)}
+                 :onblur (u/event-message this ->Blur)
+                 :onkeydown (u/event-message this ->KeyDown)})
 
   handle-message
   (fn [msg]
@@ -35,13 +34,13 @@
       Blur
       ;; Note: when pressing Return, a blur follows after the keypress (hidden while focused)
       (if editing
-        (reacl/return :action commit-action)
+        commit-action
         (reacl/return))
       
       KeyDown
       (let [key-pressed (:which msg)]
         (condp = key-pressed
-          helpers/enter-key (reacl/return :action commit-action)
-          helpers/escape-key (reacl/return :action reset-action)
+          helpers/enter-key commit-action
+          helpers/escape-key reset-action
           
           (reacl/return))))))

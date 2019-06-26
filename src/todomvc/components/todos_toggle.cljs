@@ -15,4 +15,4 @@
 
   handle-message
   (fn [toggle]
-    (reacl/return :action (toggle-action toggle))))
+    (toggle-action toggle)))

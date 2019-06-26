@@ -2,32 +2,40 @@
   (:require [reacl2.core :as reacl :include-macros true]
             [reacl2.dom :as dom]))
 
-(defn- pass-action [act]
-  (reacl/return :action act))
+(defn event-message [target f]
+  (fn [& args]
+    (reacl/return :message [target (apply f args)])))
 
-(defn- const-action [action target]
-  (when action
+(defn event-action [f]
+  (fn [v]
+    (reacl/return :action (f v))))
+
+(defn- const-event [msg target]
+  (when msg
     (fn [_]
-      (reacl/send-message! target action))))
+      (reacl/send-message! target msg))))
 
-(defn- key-action [action target]
-  (when action
+(defn- key-event [f target]
+  (when f
     (fn [e]
-      (reacl/send-message! target (action (.. e -which))))))
+      (reacl/send-message! target (f (.. e -which))))))
+
+(defn- pass [msg]
+  msg)
 
 (reacl/defclass button this [attrs label]
   render
-  (dom/button (update attrs :onclick const-action this)
+  (dom/button (update attrs :onclick const-event this)
               label)
   
-  handle-message pass-action)
+  handle-message pass)
 
 (reacl/defclass label this [attrs & content]
   render
-  (apply dom/label (update attrs :ondoubleclick const-action this)
+  (apply dom/label (update attrs :ondoubleclick const-event this)
          content)
   
-  handle-message pass-action)
+  handle-message pass)
 
 (reacl/defclass checkbox this checked? [& [attrs]]
   validate (assert (boolean? checked?))
@@ -51,8 +59,8 @@
   
   render
   (dom/input (-> (merge {:type "text"} attrs)
-                 (update :onblur const-action this)
-                 (update :onkeydown key-action this)
+                 (update :onblur const-event this)
+                 (update :onkeydown key-event this)
                  (assoc :value value
                         :onchange (fn [e]
                                     (reacl/send-message! this (->Change (.. e -target -value)))))))
@@ -61,4 +69,4 @@
   (fn [msg]
     (if (instance? Change msg)
       (reacl/return :app-state (:value msg))
-      (pass-action msg))))
+      (pass msg))))

@@ -16,4 +16,4 @@
   handle-message
   (fn [msg]
     (condp instance? msg
-      Update (reacl/return :action (update-action (:id msg) (:todo msg))))))
+      Update (update-action (:id msg) (:todo msg)))))
