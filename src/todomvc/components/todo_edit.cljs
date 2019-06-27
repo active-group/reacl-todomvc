@@ -25,7 +25,7 @@
                 {:class "edit"
                  :ref input
                  :style {:display (helpers/display-elem editing)}
-                 :onblur (u/event-message this ->Blur)
+                 :onblur (reacl/return :message [this (->Blur)])
                  :onkeydown (u/event-message this ->KeyDown)})
 
   handle-message
