@@ -24,7 +24,7 @@
             (dom/div {:class "view"}
                      (u/checkbox (reacl/bind this :completed)
                                  {:class "toggle"})
-                     (u/label {:ondoubleclick (reacl/return :message [this (->Edit)])}
+                     (u/label {:ondoubleclick (u/event-message this ->Edit)}
                               title)
                      (u/button {:class "destroy"
                                 :onclick delete-action}))
@@ -39,7 +39,7 @@
       (if-let [tr (not-empty (helpers/trim-title editing))]
         (reacl/return :app-state (assoc todo :title tr)
                       :local-state nil)
-        delete-action)
+        (delete-action))
 
       Reset
       (reacl/return :local-state nil)

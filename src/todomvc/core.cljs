@@ -37,7 +37,7 @@
                                    (dom/footer {:class "footer"}
                                                (todos-count/t todos)
                                                (todos-filters/t display-type)
-                                               (todos-clear/t todos (reacl/return :message [this (->ClearCompleted)])))))
+                                               (todos-clear/t todos (u/event-message this ->ClearCompleted)))))
              (footer/t)))
 
   handle-message

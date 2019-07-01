@@ -10,7 +10,7 @@
   (dom/ul {:class "todo-list"}
           (for [[id todo] todos]
             (-> (todo-item/t (reacl/reactive todo (reacl/reaction this ->Update id))
-                             display-type (delete-action id))
+                             display-type (partial delete-action id))
                 (reacl/keyed id))))
 
   handle-message

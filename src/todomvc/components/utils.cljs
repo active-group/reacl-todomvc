@@ -10,10 +10,10 @@
   (fn [v]
     (reacl/return :action (f v))))
 
-(defn- const-event [msg target]
-  (when msg
+(defn- void-event [f target]
+  (when f
     (fn [_]
-      (reacl/send-message! target msg))))
+      (reacl/send-message! target (f)))))
 
 (defn- key-event [f target]
   (when f
@@ -25,14 +25,14 @@
 
 (reacl/defclass button this [attrs label]
   render
-  (dom/button (update attrs :onclick const-event this)
+  (dom/button (update attrs :onclick void-event this)
               label)
   
   handle-message pass)
 
 (reacl/defclass label this [attrs & content]
   render
-  (apply dom/label (update attrs :ondoubleclick const-event this)
+  (apply dom/label (update attrs :ondoubleclick void-event this)
          content)
   
   handle-message pass)
@@ -59,7 +59,7 @@
   
   render
   (dom/input (-> (merge {:type "text"} attrs)
-                 (update :onblur const-event this)
+                 (update :onblur void-event this)
                  (update :onkeydown key-event this)
                  (assoc :value value
                         :onchange (fn [e]
